@@ -60,4 +60,4 @@
 Kotlin Multiplatform · Compose Multiplatform · Koin (DI) · Navigation Compose ·
 [FileKit](https://github.com/vinceglb/FileKit) (доступ к файлам) · media3 · AVFoundation · JavaFX · PDFBox · PdfRenderer · PDFKit · Multiplatform Settings
 
-Архитектура — **MVI**: на каждый экран триада `State / Action / Event` и `ViewModel` с `onAction()`.
+Архитектура — **MVI**
