@@ -96,12 +96,21 @@ fun SettingsScreen(
                 Column(Modifier.fillMaxWidth().padding(16.dp)) {
                     Text("Папка с курсами", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                     Text(
-                        state.currentFolder ?: "не выбрана",
+                        when {
+                            state.isScanning -> "Сканирование…"
+                            state.currentFolder != null -> state.currentFolder!!
+                            else -> "не выбрана"
+                        },
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(10.dp))
-                    OutlinedButton(onClick = { picker.launch() }) { Text("Выбрать папку") }
+                    OutlinedButton(
+                        onClick = { picker.launch() },
+                        enabled = !state.isScanning,
+                    ) {
+                        Text(if (state.currentFolder != null) "Сменить папку" else "Выбрать папку")
+                    }
                 }
             }
 

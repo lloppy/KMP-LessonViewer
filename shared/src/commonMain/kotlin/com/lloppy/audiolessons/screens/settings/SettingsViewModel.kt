@@ -20,10 +20,15 @@ class SettingsViewModel(
     private val progress: ProgressRepository,
 ) : ViewModel() {
 
-    val state: StateFlow<SettingsState> = combine(settings.themeMode, library.state) { mode, libraryState ->
+    val state: StateFlow<SettingsState> = combine(
+        settings.themeMode,
+        library.currentRootName,
+        library.state,
+    ) { mode, folder, libraryState ->
         SettingsState(
             themeMode = mode,
-            currentFolder = (libraryState as? LibraryState.Ready)?.library?.rootName,
+            currentFolder = folder,
+            isScanning = libraryState is LibraryState.Loading,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsState())
 

@@ -7,75 +7,107 @@ import com.lloppy.audiolessons.library.model.Library
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.isDirectory
-import io.github.vinceglb.filekit.isRegularFile
 import io.github.vinceglb.filekit.list
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.nameWithoutExtension
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 class RecursiveLibraryScanner : LibraryScanner {
 
-    override suspend fun scan(root: PlatformFile): Library {
-        val courses = root.list()
-            .filter { it.isDirectory() }
-            .sortedWith(byName)
-            .map { scanCourse(it) }
+    private class Entry(
+        val file: PlatformFile,
+        val name: String,
+        val base: String,
+        val ext: String,
+        val isDir: Boolean,
+    )
+
+    override suspend fun scan(root: PlatformFile): Library = coroutineScope {
+        val dirs = entries(root).filter { it.isDir }
+        val courses = dirs
+            .map { dir -> async { scanCourse(dir.file, dir.name) } }
+            .awaitAll()
             .filter { it.lessons.isNotEmpty() }
-        return Library(rootName = root.name, courses = courses)
+            .sortedWith(compareBy(NaturalOrder) { it.title })
+        Library(rootName = root.name, courses = courses)
     }
 
-    private suspend fun scanCourse(courseDir: PlatformFile): Course {
-        val lessons = ArrayList<Lesson>()
-        walk(courseDir, idPrefix = listOf(courseDir.name), section = null, out = lessons)
-        return Course(id = courseDir.name, title = courseDir.name, lessons = lessons)
-    }
+    private suspend fun scanCourse(courseDir: PlatformFile, courseName: String): Course =
+        Course(
+            id = courseName,
+            title = courseName,
+            lessons = walk(courseDir, listOf(courseName), section = null),
+        )
 
     private suspend fun walk(
         dir: PlatformFile,
         idPrefix: List<String>,
         section: String?,
-        out: MutableList<Lesson>,
-    ) {
-        val children = dir.list()
-        val files = children.filter { it.isRegularFile() }
-        val mp3s = files.filter { it.extension.equals("mp3", ignoreCase = true) }.sortedWith(byName)
-        val pdfs = files.filter { it.extension.equals("pdf", ignoreCase = true) }
+    ): List<Lesson> = coroutineScope {
+        val entries = entries(dir)
+        val files = entries.filterNot { it.isDir }
+        val mp3s = files.filter { it.ext.equals("mp3", ignoreCase = true) }
+            .sortedWith(compareBy(NaturalOrder) { it.name })
+        val pdfs = files.filter { it.ext.equals("pdf", ignoreCase = true) }
 
-        val pdfByNumber = HashMap<Int, PlatformFile>()
+        val pdfByNumber = HashMap<Int, Entry>()
         for (pdf in pdfs) {
-            val n = lessonNumber(pdf.nameWithoutExtension) ?: continue
+            val n = lessonNumber(pdf.base) ?: continue
             if (n !in pdfByNumber) pdfByNumber[n] = pdf
         }
         val singlePdf = pdfs.singleOrNull()
 
-        for (mp3 in mp3s) {
-            val base = mp3.nameWithoutExtension
-            val pdf = pdfs.firstOrNull { it.nameWithoutExtension.equals(base, ignoreCase = true) }
-                ?: lessonNumber(base)?.let { pdfByNumber[it] }
+        val here = mp3s.map { mp3 ->
+            val pdf = pdfs.firstOrNull { it.base.equals(mp3.base, ignoreCase = true) }
+                ?: lessonNumber(mp3.base)?.let { pdfByNumber[it] }
                 ?: singlePdf
             val id = (idPrefix + mp3.name).joinToString("/")
-            out += Lesson(
+            Lesson(
                 id = id,
-                title = base,
-                audio = FileRef(mp3, id),
-                pdf = pdf?.let { FileRef(it, (idPrefix + it.name).joinToString("/")) },
+                title = mp3.base,
+                audio = FileRef(mp3.file, id),
+                pdf = pdf?.let { FileRef(it.file, (idPrefix + it.name).joinToString("/")) },
                 section = section,
             )
         }
 
-        children.filter { it.isDirectory() }
-            .sortedWith(byName)
-            .forEach { sub -> walk(sub, idPrefix + sub.name, section = sub.name, out = out) }
+        val deeper = entries.filter { it.isDir }
+            .sortedWith(compareBy(NaturalOrder) { it.name })
+            .map { sub -> async { walk(sub.file, idPrefix + sub.name, section = sub.name) } }
+            .awaitAll()
+            .flatten()
+
+        here + deeper
+    }
+
+    /** Читает детей папки и их метаданные параллельно — на SAF каждый доступ это IPC. */
+    private suspend fun entries(dir: PlatformFile): List<Entry> = coroutineScope {
+        dir.list()
+            .map { file ->
+                async {
+                    Entry(
+                        file = file,
+                        name = file.name,
+                        base = file.nameWithoutExtension,
+                        ext = file.extension,
+                        isDir = file.isDirectory(),
+                    )
+                }
+            }
+            .awaitAll()
     }
 
     private fun lessonNumber(name: String): Int? =
         LESSON_RE.find(name.lowercase())?.groupValues?.getOrNull(1)?.toIntOrNull()
 
     private companion object {
-        // Без (?i): Java-regex не сворачивает регистр кириллицы, поэтому имя приводим к lowercase сами.
         val LESSON_RE = Regex("урок\\s*(\\d+)")
-        val byName = Comparator<PlatformFile> { a, b -> naturalCompare(a.name, b.name) }
     }
 }
+
+internal val NaturalOrder = Comparator<String> { a, b -> naturalCompare(a, b) }
 
 internal fun naturalCompare(a: String, b: String): Int {
     val x = a.lowercase()

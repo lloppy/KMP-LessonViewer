@@ -6,6 +6,7 @@ import io.github.vinceglb.filekit.PlatformFile
 data class SettingsState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val currentFolder: String? = null,
+    val isScanning: Boolean = false,
 )
 
 sealed interface SettingsAction {
