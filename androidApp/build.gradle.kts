@@ -10,15 +10,15 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.uiToolingPreview)
     implementation(libs.compose.foundation)
-    implementation(libs.ktor.client.okhttp)
+    implementation(libs.koin.android)
 }
 
 android {
-    namespace = "com.lloppy.candycrash"
+    namespace = "com.lloppy.audiolessons"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.lloppy.candycrash"
+        applicationId = "com.lloppy.audiolessons"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
