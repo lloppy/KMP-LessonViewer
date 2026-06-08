@@ -32,6 +32,10 @@ class Media3AudioPlayer(context: Context) : AudioPlayer {
     private var controller: MediaController? = null
     private var pollJob: Job? = null
 
+    private var pendingItem: MediaItem? = null
+    private var pendingStartMs: Long = 0L
+    private var pendingPlay: Boolean = false
+
     init {
         val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
         val future = MediaController.Builder(context, token).buildAsync()
@@ -49,6 +53,13 @@ class Media3AudioPlayer(context: Context) : AudioPlayer {
                         pushPosition()
                     }
                 })
+                pendingItem?.let { item ->
+                    c.setMediaItem(item, pendingStartMs)
+                    c.prepare()
+                    if (pendingPlay) c.play()
+                }
+                pendingItem = null
+                pendingPlay = false
             }
         }, MoreExecutors.directExecutor())
     }
@@ -58,15 +69,20 @@ class Media3AudioPlayer(context: Context) : AudioPlayer {
             .setMediaId(mediaId)
             .setUri(file.path)
             .build()
-        controller?.run {
-            setMediaItem(item, startPositionMs)
-            prepare()
+        val c = controller
+        if (c != null) {
+            c.setMediaItem(item, startPositionMs)
+            c.prepare()
+        } else {
+            pendingItem = item
+            pendingStartMs = startPositionMs
         }
         _state.update { it.copy(mediaId = mediaId, positionMs = startPositionMs) }
     }
 
     override fun play() {
-        controller?.play()
+        val c = controller
+        if (c != null) c.play() else pendingPlay = true
     }
 
     override fun pause() {
