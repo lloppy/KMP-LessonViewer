@@ -1,4 +1,4 @@
-# Аудиоуроки · MP-LessonViewer
+# Аудиоуроки · KMP-LessonViewer
 
 Кроссплатформенное приложение на **Kotlin Multiplatform + Compose Multiplatform** для прослушивания аудиоуроков с синхронным просмотром текстовой версии (PDF).
 
