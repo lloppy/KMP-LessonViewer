@@ -40,45 +40,58 @@ actual fun PdfViewer(file: PlatformFile, modifier: Modifier) {
     val context = LocalContext.current
     val result by produceState<Result<AndroidPdf>?>(null, file) {
         value = withContext(Dispatchers.IO) {
-            runCatching {
-                val pfd = openDescriptor(context, file)
-                AndroidPdf(PdfRenderer(pfd), pfd)
+            runCatching { AndroidPdf(openDescriptor(context, file)) }
+        }
+    }
+
+    when (val current = result) {
+        null -> Box(modifier, Alignment.Center) { CircularProgressIndicator() }
+
+        else -> {
+            val pdf = current.getOrNull()
+            when {
+                pdf == null -> Box(modifier, Alignment.Center) {
+                    Text(
+                        "Не удалось открыть PDF: ${current.exceptionOrNull()?.message}",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(24.dp),
+                    )
+                }
+
+                pdf.pageCount == 0 -> Box(modifier, Alignment.Center) {
+                    Text("PDF открылся, но в нём 0 страниц", color = MaterialTheme.colorScheme.error)
+                }
+
+                else -> PdfPages(pdf, modifier)
             }
         }
     }
-    DisposableEffect(result) {
-        onDispose { result?.getOrNull()?.close() }
+}
+
+@Composable
+private fun PdfPages(pdf: AndroidPdf, modifier: Modifier) {
+    DisposableEffect(pdf) {
+        onDispose { pdf.close() }
     }
-
-    val current = result
-    when {
-        current == null -> Box(modifier, Alignment.Center) { CircularProgressIndicator() }
-
-        current.isFailure -> Box(modifier, Alignment.Center) {
-            Text(
-                "Не удалось открыть PDF: ${current.exceptionOrNull()?.message}",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(24.dp),
-            )
-        }
-
-        else -> {
-            val pdf = current.getOrThrow()
-            LazyColumn(modifier) {
-                items(pdf.pageCount) { index ->
-                    val image by produceState<ImageBitmap?>(null, index, pdf) {
-                        value = withContext(Dispatchers.IO) { runCatching { pdf.renderPage(index) }.getOrNull() }
-                    }
-                    val bitmap = image
-                    if (bitmap != null) {
-                        Image(
-                            bitmap = bitmap,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        )
-                    } else {
-                        Box(Modifier.fillMaxWidth().aspectRatio(0.707f))
-                    }
+    LazyColumn(modifier) {
+        items(pdf.pageCount) { index ->
+            val page by produceState<Result<ImageBitmap>?>(null, index, pdf) {
+                value = withContext(Dispatchers.IO) { runCatching { pdf.renderPage(index) } }
+            }
+            when (val rendered = page) {
+                null -> Box(Modifier.fillMaxWidth().aspectRatio(0.707f))
+                else -> if (rendered.isSuccess) {
+                    Image(
+                        bitmap = rendered.getOrThrow(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    )
+                } else {
+                    Text(
+                        "Стр. ${index + 1}: ${rendered.exceptionOrNull()?.message}",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp),
+                    )
                 }
             }
         }
@@ -97,9 +110,9 @@ private suspend fun openDescriptor(context: Context, file: PlatformFile): Parcel
 }
 
 private class AndroidPdf(
-    private val renderer: PdfRenderer,
     private val pfd: ParcelFileDescriptor,
 ) {
+    private val renderer = PdfRenderer(pfd)
     private val mutex = Mutex()
     val pageCount: Int get() = renderer.pageCount
 
