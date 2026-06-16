@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,17 +80,17 @@ fun PlayerBar(
                 Text(formatTime(effective.toLong()), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(formatTime(durationMs), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                ControlButton(onClick = onPrevLesson, enabled = hasPrev) {
+                FilledControlButton(onClick = onPrevLesson, enabled = hasPrev) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = "Предыдущий урок",
-                        tint = MaterialTheme.colorScheme.onSurface,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 ControlButton(onClick = onSkipBack, enabled = true) {
@@ -122,7 +123,7 @@ fun PlayerBar(
                 ControlButton(onClick = onSkipForward, enabled = true) {
                     SkipLabel("+10")
                 }
-                ControlButton(onClick = onNextLesson, enabled = hasNext) {
+                FilledControlButton(onClick = onNextLesson, enabled = hasNext) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = "Следующий урок",
@@ -135,7 +136,7 @@ fun PlayerBar(
 }
 
 @Composable
-private fun ControlButton(
+private fun FilledControlButton(
     onClick: () -> Unit,
     enabled: Boolean,
     content: @Composable () -> Unit,
@@ -150,12 +151,28 @@ private fun ControlButton(
 }
 
 @Composable
+private fun ControlButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        onClick = { if (enabled) onClick() },
+        modifier = Modifier.size(48.dp).alpha(if (enabled) 1f else 0.3f),
+        shape = CircleShape,
+        color = Color.Transparent,
+    ) {
+        Box(contentAlignment = Alignment.Center) { content() }
+    }
+}
+
+@Composable
 private fun SkipLabel(text: String) {
     Text(
         text = text,
         fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 

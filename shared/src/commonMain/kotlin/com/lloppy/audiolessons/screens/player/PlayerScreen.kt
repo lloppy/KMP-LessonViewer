@@ -37,7 +37,7 @@ import kotlin.math.roundToInt
 
 private const val SKIP_MS = 10_000L
 private const val ZOOM_STEP = 0.1f
-private const val ZOOM_MIN = 0.5f
+private const val ZOOM_MIN = 1f
 private const val ZOOM_MAX = 3f
 
 @Composable

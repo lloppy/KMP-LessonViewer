@@ -23,7 +23,6 @@ class RecursiveScannerRealDataTest {
             println("SKIP: пример курса не найден: $root")
             return@runBlocking
         }
-        // Корень для приложения — родитель курса, тогда курс = папка langme-...
         val library = RecursiveLibraryScanner().scan(PlatformFile(root.parentFile))
         val course = library.courses.firstOrNull { it.title.contains("langme") }
         assertTrue(course != null, "Курс langme не найден среди ${library.courses.map { it.title }}")
