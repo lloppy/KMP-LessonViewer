@@ -12,4 +12,7 @@ data class LessonsDestination(val courseId: String)
 data class PlayerDestination(val lessonId: String)
 
 @Serializable
+data class StoryDestination(val lessonId: String, val pageIndex: Int = 0)
+
+@Serializable
 object SettingsDestination

@@ -9,6 +9,7 @@ import com.lloppy.audiolessons.screens.courses.CoursesScreen
 import com.lloppy.audiolessons.screens.lessons.LessonsScreen
 import com.lloppy.audiolessons.screens.player.PlayerScreen
 import com.lloppy.audiolessons.screens.settings.SettingsScreen
+import com.lloppy.audiolessons.story.StoryScreen
 
 @Composable
 fun AppNavHost() {
@@ -30,6 +31,17 @@ fun AppNavHost() {
         composable<PlayerDestination> { backStackEntry ->
             PlayerScreen(
                 lessonId = backStackEntry.toRoute<PlayerDestination>().lessonId,
+                onBack = { navController.popBackStack() },
+                onOpenStory = { lessonId, pageIndex ->
+                    navController.navigate(StoryDestination(lessonId, pageIndex))
+                },
+            )
+        }
+        composable<StoryDestination> { backStackEntry ->
+            val args = backStackEntry.toRoute<StoryDestination>()
+            StoryScreen(
+                lessonId = args.lessonId,
+                pageIndex = args.pageIndex,
                 onBack = { navController.popBackStack() },
             )
         }

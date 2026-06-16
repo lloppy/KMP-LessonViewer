@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import com.lloppy.audiolessons.pdf.PdfViewer
 import com.lloppy.audiolessons.screens.player.components.PlayerBar
+import com.lloppy.audiolessons.story.di.isStoryAvailable
 import com.lloppy.audiolessons.ui.AppBackground
 import com.lloppy.audiolessons.ui.CircleIconButton
 import com.lloppy.audiolessons.ui.ScreenHeader
@@ -53,6 +54,7 @@ private const val ZOOM_MAX = 3f
 fun PlayerScreen(
     lessonId: String,
     onBack: () -> Unit,
+    onOpenStory: (lessonId: String, pageIndex: Int) -> Unit = { _, _ -> },
 ) {
     val viewModel = koinViewModel<PlayerViewModel> { parametersOf(lessonId) }
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -77,6 +79,16 @@ fun PlayerScreen(
             ScreenHeader(
                 title = state.lesson?.title ?: "Урок",
                 onBack = { viewModel.onAction(PlayerAction.BackClicked) },
+                action = if (isStoryAvailable) {
+                    {
+                        CircleIconButton(
+                            onClick = { onOpenStory(lessonId, 0) },
+                            container = MaterialTheme.colorScheme.surface,
+                        ) {
+                            Text("🎤", fontSize = 18.sp)
+                        }
+                    }
+                } else null,
             )
 
             val pdf = state.lesson?.pdf

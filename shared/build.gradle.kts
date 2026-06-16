@@ -56,6 +56,9 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.media3.exoplayer)
             implementation(libs.media3.session)
+            implementation(libs.media3.transformer)
+            implementation(libs.media3.effect)
+            implementation(libs.media3.common)
         }
         val desktopTest by getting
         desktopTest.dependencies {
@@ -77,6 +80,7 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
+            implementation(compose.components.uiToolingPreview)
 
             implementation(libs.navigation.compose)
             implementation(libs.androidx.lifecycle.runtimeCompose)

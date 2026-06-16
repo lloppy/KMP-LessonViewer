@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -40,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -74,7 +74,14 @@ fun PlayerBar(
 
     SectionCard(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp)) {
-            DragHandle(expanded = expanded, onExpandedChange = { expanded = it })
+            HandleRow(
+                hasPrev = hasPrev,
+                hasNext = hasNext,
+                expanded = expanded,
+                onExpandedChange = { expanded = it },
+                onPrevLesson = onPrevLesson,
+                onNextLesson = onNextLesson,
+            )
             Slider(
                 value = effective.coerceIn(0f, max),
                 onValueChange = { dragValue = it },
@@ -100,12 +107,10 @@ fun PlayerBar(
             }
             AnimatedVisibility(visible = expanded) {
                 ExpandedControls(
-                    hasPrev = hasPrev,
-                    hasNext = hasNext,
                     onSkipBack = onSkipBack,
                     onSkipForward = onSkipForward,
-                    onPrevLesson = onPrevLesson,
-                    onNextLesson = onNextLesson,
+                    onSeekToStart = { onSeek(0L) },
+                    onSeekToEnd = { onSeek(durationMs.coerceAtLeast(0L)) },
                 )
             }
         }
@@ -114,12 +119,10 @@ fun PlayerBar(
 
 @Composable
 private fun ExpandedControls(
-    hasPrev: Boolean,
-    hasNext: Boolean,
     onSkipBack: () -> Unit,
     onSkipForward: () -> Unit,
-    onPrevLesson: () -> Unit,
-    onNextLesson: () -> Unit,
+    onSeekToStart: () -> Unit,
+    onSeekToEnd: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -131,12 +134,8 @@ private fun ExpandedControls(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.Top,
         ) {
-            FilledControlButton(onClick = onPrevLesson, enabled = hasPrev) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = "Предыдущий урок",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            FilledControlButton(onClick = onSeekToStart, enabled = true) {
+                SeekEdgeGlyph(toStart = true)
             }
             ControlButton(onClick = onSkipBack, enabled = true) {
                 SkipLabel("−10")
@@ -144,14 +143,99 @@ private fun ExpandedControls(
             ControlButton(onClick = onSkipForward, enabled = true) {
                 SkipLabel("+10")
             }
-            FilledControlButton(onClick = onNextLesson, enabled = hasNext) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "Следующий урок",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
+            FilledControlButton(onClick = onSeekToEnd, enabled = true) {
+                SeekEdgeGlyph(toStart = false)
             }
         }
+    }
+}
+
+@Composable
+private fun HandleRow(
+    hasPrev: Boolean,
+    hasNext: Boolean,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    onPrevLesson: () -> Unit,
+    onNextLesson: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp, bottom = 24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LessonNavButton(pointsRight = false, enabled = hasPrev, onClick = onPrevLesson)
+        DragHandle(
+            expanded = expanded,
+            onExpandedChange = onExpandedChange,
+            modifier = Modifier.weight(1f),
+        )
+        LessonNavButton(pointsRight = true, enabled = hasNext, onClick = onNextLesson)
+    }
+}
+
+@Composable
+private fun LessonNavButton(
+    pointsRight: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
+    Box(
+        modifier = Modifier
+            .size(width = 40.dp, height = 24.dp)
+            .alpha(if (enabled) 1f else 0.3f)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                enabled = enabled,
+            ) { onClick() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.size(width = 6.dp, height = 12.dp)) {
+            val w = size.width
+            val h = size.height
+            val path = Path().apply {
+                if (pointsRight) {
+                    moveTo(0f, 0f)
+                    lineTo(w, h / 2f)
+                    lineTo(0f, h)
+                } else {
+                    moveTo(w, 0f)
+                    lineTo(0f, h / 2f)
+                    lineTo(w, h)
+                }
+            }
+            drawPath(
+                path = path,
+                color = color,
+                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SeekEdgeGlyph(toStart: Boolean) {
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
+    Canvas(Modifier.size(20.dp)) {
+        val w = size.width
+        val h = size.height
+        val triangle = Path()
+        if (toStart) {
+            drawRect(color = color, topLeft = Offset(w * 0.16f, h * 0.28f), size = Size(w * 0.12f, h * 0.44f))
+            triangle.moveTo(w * 0.82f, h * 0.28f)
+            triangle.lineTo(w * 0.36f, h * 0.5f)
+            triangle.lineTo(w * 0.82f, h * 0.72f)
+        } else {
+            drawRect(color = color, topLeft = Offset(w * 0.72f, h * 0.28f), size = Size(w * 0.12f, h * 0.44f))
+            triangle.moveTo(w * 0.18f, h * 0.28f)
+            triangle.lineTo(w * 0.64f, h * 0.5f)
+            triangle.lineTo(w * 0.18f, h * 0.72f)
+        }
+        triangle.close()
+        drawPath(path = triangle, color = color)
     }
 }
 
@@ -159,6 +243,7 @@ private fun ExpandedControls(
 private fun DragHandle(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
@@ -167,8 +252,8 @@ private fun DragHandle(
     )
     val chevronColor = MaterialTheme.colorScheme.onSurfaceVariant
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .height(24.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -189,13 +274,12 @@ private fun DragHandle(
                         }
                     },
                 )
-            }
-            .padding(top = 6.dp, bottom = 24.dp),
-        contentAlignment = Alignment.Center,
+            },
+        contentAlignment = Alignment.TopCenter,
     ) {
         Canvas(
             modifier = Modifier
-                .size(width = 28.dp, height = 8.dp)
+                .size(width = 26.dp, height = 6.dp)
                 .rotate(rotation),
         ) {
             val w = size.width

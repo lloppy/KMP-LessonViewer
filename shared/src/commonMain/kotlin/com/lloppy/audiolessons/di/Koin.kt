@@ -3,6 +3,7 @@ package com.lloppy.audiolessons.di
 import com.lloppy.audiolessons.AppViewModel
 import com.lloppy.audiolessons.audio.di.audioModule
 import com.lloppy.audiolessons.audio.di.platformAudioModule
+import com.lloppy.audiolessons.story.di.platformStoryModule
 import com.lloppy.audiolessons.library.LibraryRepository
 import com.lloppy.audiolessons.library.scan.LibraryScanner
 import com.lloppy.audiolessons.library.scan.RecursiveLibraryScanner
@@ -56,6 +57,7 @@ fun initKoin(config: (KoinApplication.() -> Unit)? = null) {
             libraryModule,
             audioModule,
             platformAudioModule,
+            platformStoryModule,
             viewModelModule,
         )
     }
