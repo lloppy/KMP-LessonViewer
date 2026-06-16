@@ -49,7 +49,7 @@ class RecursiveLibraryScanner : LibraryScanner {
         val entries = entries(dir)
         val files = entries.filterNot { it.isDir }
         val mp3s = files.filter { it.ext.equals("mp3", ignoreCase = true) }
-            .sortedWith(compareBy(NaturalOrder) { it.name })
+            .sortedWith(compareBy(NaturalOrder) { it.base })
         val pdfs = files.filter { it.ext.equals("pdf", ignoreCase = true) }
 
         val pdfByNumber = HashMap<Int, Entry>()

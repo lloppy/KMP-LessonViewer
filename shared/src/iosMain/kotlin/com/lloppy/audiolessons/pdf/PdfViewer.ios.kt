@@ -12,12 +12,21 @@ import platform.PDFKit.PDFView
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
-actual fun PdfViewer(file: PlatformFile, modifier: Modifier) {
+actual fun PdfViewer(file: PlatformFile, modifier: Modifier, zoom: Float) {
     UIKitView(
         factory = {
             PDFView().apply {
                 autoScales = true
                 document = PDFDocument(uRL = NSURL.fileURLWithPath(file.path))
+            }
+        },
+        update = { view ->
+            val fit = view.scaleFactorForSizeToFit
+            if (fit > 0.0) {
+                view.minScaleFactor = fit * 0.1
+                view.maxScaleFactor = fit * 5.0
+                view.autoScales = zoom == 1f
+                view.scaleFactor = fit * zoom.toDouble()
             }
         },
         modifier = modifier,

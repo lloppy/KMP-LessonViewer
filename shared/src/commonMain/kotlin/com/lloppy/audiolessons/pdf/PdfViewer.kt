@@ -5,4 +5,4 @@ import androidx.compose.ui.Modifier
 import io.github.vinceglb.filekit.PlatformFile
 
 @Composable
-expect fun PdfViewer(file: PlatformFile, modifier: Modifier = Modifier)
+expect fun PdfViewer(file: PlatformFile, modifier: Modifier = Modifier, zoom: Float = 1f)

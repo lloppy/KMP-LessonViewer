@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -28,9 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lloppy.audiolessons.ui.CircleIconButton
 import com.lloppy.audiolessons.ui.SectionCard
 
 @Composable
@@ -39,8 +44,14 @@ fun PlayerBar(
     isBuffering: Boolean,
     positionMs: Long,
     durationMs: Long,
+    hasPrev: Boolean,
+    hasNext: Boolean,
     onPlayPause: () -> Unit,
     onSeek: (Long) -> Unit,
+    onSkipBack: () -> Unit,
+    onSkipForward: () -> Unit,
+    onPrevLesson: () -> Unit,
+    onNextLesson: () -> Unit,
 ) {
     var dragValue by remember { mutableStateOf<Float?>(null) }
     val effective = dragValue ?: positionMs.toFloat()
@@ -68,8 +79,22 @@ fun PlayerBar(
                 Text(formatTime(effective.toLong()), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(formatTime(durationMs), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Spacer(Modifier.height(10.dp))
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Spacer(Modifier.height(14.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ControlButton(onClick = onPrevLesson, enabled = hasPrev) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = "Предыдущий урок",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                ControlButton(onClick = onSkipBack, enabled = true) {
+                    SkipLabel("−10")
+                }
                 Surface(
                     onClick = onPlayPause,
                     modifier = Modifier.size(64.dp),
@@ -94,9 +119,44 @@ fun PlayerBar(
                         }
                     }
                 }
+                ControlButton(onClick = onSkipForward, enabled = true) {
+                    SkipLabel("+10")
+                }
+                ControlButton(onClick = onNextLesson, enabled = hasNext) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = "Следующий урок",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+private fun ControlButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    content: @Composable () -> Unit,
+) {
+    CircleIconButton(
+        onClick = { if (enabled) onClick() },
+        modifier = Modifier.alpha(if (enabled) 1f else 0.35f),
+        size = 48.dp,
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun SkipLabel(text: String) {
+    Text(
+        text = text,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
 }
 
 @Composable
