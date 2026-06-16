@@ -1,7 +1,11 @@
 package com.lloppy.audiolessons.screens.player
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,10 +26,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import com.lloppy.audiolessons.pdf.PdfViewer
 import com.lloppy.audiolessons.screens.player.components.PlayerBar
 import com.lloppy.audiolessons.ui.AppBackground
@@ -72,6 +81,22 @@ fun PlayerScreen(
 
             val pdf = state.lesson?.pdf
             var zoom by remember(pdf?.id) { mutableStateOf(1f) }
+            var zoomVisible by remember(pdf?.id) { mutableStateOf(false) }
+            val interaction = remember { mutableStateOf(0) }
+            val scrollConnection = remember {
+                object : NestedScrollConnection {
+                    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                        if (available.y != 0f) interaction.value++
+                        return Offset.Zero
+                    }
+                }
+            }
+            LaunchedEffect(interaction.value) {
+                if (interaction.value == 0) return@LaunchedEffect
+                zoomVisible = true
+                delay(700)
+                zoomVisible = false
+            }
             Box(
                 modifier = Modifier.fillMaxWidth().weight(1f).padding(vertical = 4.dp),
                 contentAlignment = Alignment.Center,
@@ -84,7 +109,7 @@ fun PlayerScreen(
                     }
                 } else {
                     Surface(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().nestedScroll(scrollConnection),
                         shape = RoundedCornerShape(20.dp),
                         color = MaterialTheme.colorScheme.surface,
                         shadowElevation = 2.dp,
@@ -95,13 +120,17 @@ fun PlayerScreen(
                             zoom = zoom,
                         )
                     }
-                    ZoomControls(
+                    PdfZoomOverlay(
+                        visible = zoomVisible,
                         zoom = zoom,
-                        onZoomIn = { zoom = (zoom + ZOOM_STEP).coerceAtMost(ZOOM_MAX) },
-                        onZoomOut = { zoom = (zoom - ZOOM_STEP).coerceAtLeast(ZOOM_MIN) },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(12.dp),
+                        onZoomIn = {
+                            zoom = (zoom + ZOOM_STEP).coerceAtMost(ZOOM_MAX)
+                            interaction.value++
+                        },
+                        onZoomOut = {
+                            zoom = (zoom - ZOOM_STEP).coerceAtLeast(ZOOM_MIN)
+                            interaction.value++
+                        },
                     )
                 }
             }
@@ -121,6 +150,25 @@ fun PlayerScreen(
                 onNextLesson = { viewModel.onAction(PlayerAction.NextLesson) },
             )
         }
+    }
+}
+
+@Composable
+private fun BoxScope.PdfZoomOverlay(
+    visible: Boolean,
+    zoom: Float,
+    onZoomIn: () -> Unit,
+    onZoomOut: () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(12.dp),
+    ) {
+        ZoomControls(zoom = zoom, onZoomIn = onZoomIn, onZoomOut = onZoomOut)
     }
 }
 

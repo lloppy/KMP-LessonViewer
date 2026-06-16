@@ -53,15 +53,15 @@ class PlayerViewModel(
             PlayerAction.PlayPause -> if (player.state.value.isPlaying) player.pause() else player.play()
             is PlayerAction.Seek -> player.seekTo(action.positionMs)
             is PlayerAction.Skip -> skip(action.deltaMs)
-            PlayerAction.PrevLesson -> neighbors.value.first?.let { loadLesson(it.id, autoPlay = true) }
-            PlayerAction.NextLesson -> neighbors.value.second?.let { loadLesson(it.id, autoPlay = true) }
+            PlayerAction.PrevLesson -> neighbors.value.first?.let { loadLesson(it.id) }
+            PlayerAction.NextLesson -> neighbors.value.second?.let { loadLesson(it.id) }
             PlayerAction.BackClicked -> _events.trySend(PlayerEvent.NavigateBack)
         }
     }
 
     @OptIn(FlowPreview::class)
     private fun start() {
-        loadLesson(currentId, autoPlay = false)
+        loadLesson(currentId)
         player.state
             .filter { it.mediaId != null && it.positionMs > 0 }
             .map { Triple(it.mediaId!!, it.positionMs, it.durationMs) }
@@ -71,7 +71,7 @@ class PlayerViewModel(
             .launchIn(viewModelScope)
     }
 
-    private fun loadLesson(id: String, autoPlay: Boolean) {
+    private fun loadLesson(id: String) {
         val ready = (library.state.value as? LibraryState.Ready)?.library ?: return
         val resolved = ready.lesson(id) ?: return
         currentId = id
@@ -81,7 +81,6 @@ class PlayerViewModel(
             progress.setLastLesson(id)
             player.load(id, resolved.audio.file, progress.get(id).positionMs)
         }
-        if (autoPlay) player.play()
     }
 
     private fun skip(deltaMs: Long) {
