@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lloppy.audiolessons.library.LibraryRepository
 import com.lloppy.audiolessons.library.LibraryState
-import com.lloppy.audiolessons.pdf.renderPdfPage
+import com.lloppy.audiolessons.pdf.renderPdfDocument
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +16,6 @@ import kotlinx.coroutines.launch
 
 class StoryViewModel(
     private val lessonId: String,
-    private val pageIndex: Int,
     private val library: LibraryRepository,
     private val recorder: VoiceRecorder,
     private val exporter: StoryExporter,
@@ -49,7 +48,7 @@ class StoryViewModel(
         _state.update { it.copy(lesson = lesson) }
         val pdf = lesson.pdf ?: return
         viewModelScope.launch {
-            val image = renderPdfPage(pdf.file, pageIndex)
+            val image = renderPdfDocument(pdf.file)
             _state.update { it.copy(pageImage = image) }
         }
     }

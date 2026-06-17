@@ -82,7 +82,7 @@ fun PlayerScreen(
                 action = if (isStoryAvailable) {
                     {
                         CircleIconButton(
-                            onClick = { onOpenStory(lessonId, 0) },
+                            onClick = { onOpenStory(state.lesson?.id ?: lessonId, 0) },
                             container = MaterialTheme.colorScheme.surface,
                         ) {
                             Text("🎤", fontSize = 18.sp)

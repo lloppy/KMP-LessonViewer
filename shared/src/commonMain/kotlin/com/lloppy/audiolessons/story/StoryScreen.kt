@@ -42,7 +42,7 @@ fun StoryScreen(
     pageIndex: Int,
     onBack: () -> Unit,
 ) {
-    val viewModel = koinViewModel<StoryViewModel> { parametersOf(lessonId, pageIndex) }
+    val viewModel = koinViewModel<StoryViewModel> { parametersOf(lessonId) }
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Box(Modifier.fillMaxSize()) {
@@ -66,7 +66,7 @@ fun StoryScreen(
                     durationMs = state.displayDurationMs,
                     amplitude = state.amplitude,
                     attachment = state.croppedImage,
-                    isPlaying = state.phase == StoryPhase.Recorded || state.phase == StoryPhase.Done,
+                    isPlaying = state.phase == StoryPhase.Recording,
                     modifier = Modifier
                         .aspectRatio(STORY_W / STORY_H)
                         .clip(RoundedCornerShape(20.dp)),

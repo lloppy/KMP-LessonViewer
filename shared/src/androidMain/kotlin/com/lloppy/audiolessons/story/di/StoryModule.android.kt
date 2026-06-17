@@ -17,7 +17,6 @@ actual val platformStoryModule: Module = module {
     factory { params ->
         StoryViewModel(
             lessonId = params.get(),
-            pageIndex = params.get(),
             library = get(),
             recorder = get(),
             exporter = get(),

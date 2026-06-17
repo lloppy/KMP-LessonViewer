@@ -9,10 +9,12 @@ import android.graphics.Paint
 import android.graphics.Shader
 import android.net.Uri
 import android.os.SystemClock
+import android.util.Log
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.core.content.FileProvider
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.OverlaySettings
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.BitmapOverlay
@@ -41,6 +43,7 @@ private const val FRAME_H = 1920
 private const val BOTTOM_MARGIN = 130
 private const val GRADIENT_TOP = 0xFF2B1055.toInt()
 private const val GRADIENT_BOTTOM = 0xFF7597DE.toInt()
+private const val PLAY_HINT_MS = 120L
 
 @UnstableApi
 class Media3StoryExporter(context: Context) : StoryExporter {
@@ -83,12 +86,17 @@ class Media3StoryExporter(context: Context) : StoryExporter {
 
         return withContext(Dispatchers.Main) {
             suspendCancellableCoroutine { cont ->
-                val bgItem = EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(bgFile)))
-                    .setDurationUs(durationUs)
+                val bgMediaItem = MediaItem.Builder()
+                    .setUri(Uri.fromFile(bgFile))
+                    .setMimeType(MimeTypes.IMAGE_PNG)
+                    .setImageDurationMs(durationMs.coerceAtLeast(1_000L))
+                    .build()
+                val bgItem = EditedMediaItem.Builder(bgMediaItem)
                     .setFrameRate(30)
                     .setEffects(Effects(emptyList(), listOf(overlayEffect)))
                     .build()
                 val audioItem = EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(File(audioPath)))).build()
+                Log.i("StoryExport", "start durationMs=$durationMs audio=$audioPath bg=${bgFile.absolutePath} cardH=${renderer.cardH}")
                 val composition = Composition.Builder(
                     EditedMediaItemSequence.Builder(bgItem).build(),
                     EditedMediaItemSequence.Builder(audioItem).build(),
@@ -98,6 +106,7 @@ class Media3StoryExporter(context: Context) : StoryExporter {
                 val transformer = Transformer.Builder(appContext)
                     .addListener(object : Transformer.Listener {
                         override fun onCompleted(composition: Composition, result: ExportResult) {
+                            Log.i("StoryExport", "done -> ${outFile.absolutePath}")
                             _state.value = ExportState.Done(outFile.absolutePath)
                             if (cont.isActive) cont.resumeWith(Result.success(outFile.absolutePath))
                         }
@@ -107,7 +116,8 @@ class Media3StoryExporter(context: Context) : StoryExporter {
                             result: ExportResult,
                             exception: ExportException,
                         ) {
-                            _state.value = ExportState.Error(exception.message ?: "Ошибка экспорта")
+                            Log.e("StoryExport", "error code=${exception.errorCode}", exception)
+                            _state.value = ExportState.Error("[${exception.errorCode}] ${exception.message}")
                             if (cont.isActive) cont.resumeWith(Result.failure(exception))
                         }
                     })
@@ -143,7 +153,7 @@ private class AnimatedCardOverlay(
     override fun getBitmap(presentationTimeUs: Long): Bitmap {
         val progress = if (durationUs > 0) presentationTimeUs.toFloat() / durationUs else 0f
         val timeMs = presentationTimeUs / 1000
-        return renderer.render(progress = progress, timeMs = timeMs, isPlaying = timeMs >= 1000)
+        return renderer.render(progress = progress, timeMs = timeMs, isPlaying = timeMs >= PLAY_HINT_MS)
     }
 
     override fun getOverlaySettings(presentationTimeUs: Long): OverlaySettings = settings

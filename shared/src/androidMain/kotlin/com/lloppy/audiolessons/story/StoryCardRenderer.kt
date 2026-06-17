@@ -7,7 +7,6 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
-import kotlin.math.min
 
 class StoryCardRenderer(
     private val attachment: Bitmap?,
@@ -21,13 +20,12 @@ class StoryCardRenderer(
     private val iconD = 96
     private val gap = 24
     private val rowH = iconD
-    private val attMaxH = 560
     private val durationReserve = 130
 
     private val attH: Int = run {
         val a = attachment ?: return@run 0
         val w = CARD_W - 2 * pad
-        min((w.toFloat() * a.height / a.width).toInt(), attMaxH)
+        (w.toFloat() * a.height / a.width).toInt()
     }
     private val rowTop = pad + if (attachment != null) attH + 24 else 0
     val cardH = rowTop + rowH + pad
