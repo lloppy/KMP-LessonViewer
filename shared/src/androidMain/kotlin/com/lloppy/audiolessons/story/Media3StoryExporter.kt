@@ -11,7 +11,6 @@ import android.net.Uri
 import android.os.SystemClock
 import android.util.Log
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.core.content.FileProvider
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -55,11 +54,6 @@ class Media3StoryExporter(context: Context) : StoryExporter {
     override suspend fun export(attachment: ImageBitmap?, title: String, audioPath: String, durationMs: Long): String {
         val durationUs = durationMs.coerceAtLeast(1_000L) * 1_000
 
-        val attachmentBmp = attachment?.let {
-            val raw = it.asAndroidBitmap()
-            if (raw.config == Bitmap.Config.HARDWARE) raw.copy(Bitmap.Config.ARGB_8888, false) else raw
-        }
-
         val bgFile = withContext(Dispatchers.IO) {
             val bg = Bitmap.createBitmap(FRAME_W, FRAME_H, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bg)
@@ -74,7 +68,7 @@ class Media3StoryExporter(context: Context) : StoryExporter {
         }
         val outFile = File(File(appContext.cacheDir, "stories").apply { mkdirs() }, "story_${SystemClock.elapsedRealtime()}.mp4")
 
-        val renderer = StoryCardRenderer(attachmentBmp, title)
+        val renderer = StoryCardRenderer(attachment, title, appContext)
         val cardCenterFromBottom = BOTTOM_MARGIN + renderer.cardH / 2f
         val ndcY = 2f * cardCenterFromBottom / FRAME_H - 1f
         val settings = StaticOverlaySettings.Builder()
