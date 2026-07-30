@@ -1,4 +1,4 @@
-rootProject.name = "KMP-App-Template"
+rootProject.name = "MoscowNfc"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

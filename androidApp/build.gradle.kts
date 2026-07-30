@@ -14,11 +14,11 @@ dependencies {
 }
 
 android {
-    namespace = "com.lloppy.audiolessons"
+    namespace = "com.lloppy.moscow_nfc"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.lloppy.audiolessons"
+        applicationId = "com.lloppy.moscow_nfc"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
