@@ -1,4 +1,4 @@
-package com.lloppy.moscow_nfc.di
+package com.lloppy.akta.di
 
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin

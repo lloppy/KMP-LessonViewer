@@ -1,4 +1,4 @@
-rootProject.name = "MoscowNfc"
+rootProject.name = "Akta"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

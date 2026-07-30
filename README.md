@@ -1,4 +1,4 @@
-# Moscow NFC
+# Akta
 
 Кроссплатформенное приложение на **Kotlin Multiplatform + Compose Multiplatform**.
 
@@ -19,7 +19,7 @@
         └── iosMain/
 ```
 
-Базовый пакет: `com.lloppy.moscow_nfc`.
+Базовый пакет: `com.lloppy.akta`.
 
 ## Запуск
 

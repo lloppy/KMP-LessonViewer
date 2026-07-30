@@ -14,10 +14,10 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "com.lloppy.moscow_nfc.MainKt"
+        mainClass = "com.lloppy.akta.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "MoscowNfc"
+            packageName = "Akta"
             packageVersion = "1.0.0"
 
             macOS { iconFile.set(project.file("icon.icns")) }

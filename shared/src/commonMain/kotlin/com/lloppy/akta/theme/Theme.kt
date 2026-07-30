@@ -1,4 +1,4 @@
-package com.lloppy.moscow_nfc.theme
+package com.lloppy.akta.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme

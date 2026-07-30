@@ -1,4 +1,4 @@
-package com.lloppy.moscow_nfc
+package com.lloppy.akta
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

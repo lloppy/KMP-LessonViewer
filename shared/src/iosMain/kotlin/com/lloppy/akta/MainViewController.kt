@@ -1,4 +1,4 @@
-package com.lloppy.moscow_nfc
+package com.lloppy.akta
 
 import androidx.compose.ui.window.ComposeUIViewController
 

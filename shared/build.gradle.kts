@@ -22,7 +22,7 @@ kotlin {
     }
 
     androidLibrary {
-        namespace = "com.lloppy.moscow_nfc.shared"
+        namespace = "com.lloppy.akta.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 

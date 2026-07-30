@@ -1,14 +1,14 @@
-package com.lloppy.moscow_nfc
+package com.lloppy.akta
 
 import android.app.Application
-import com.lloppy.moscow_nfc.di.initKoin
+import com.lloppy.akta.di.initKoin
 import org.koin.android.ext.koin.androidContext
 
-class MoscowNfcApp : Application() {
+class AktaApp : Application() {
     override fun onCreate() {
         super.onCreate()
         initKoin {
-            androidContext(this@MoscowNfcApp)
+            androidContext(this@AktaApp)
         }
     }
 }
